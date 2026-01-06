@@ -49,8 +49,13 @@ function Window:CreateTab(name)
 
     local padding = Instance.new("UIPadding")
     padding.PaddingTop = UDim.new(0, 10)
-    padding.PaddingLeft = UDim.new(0, 10)
+    padding.PaddingLeft = UDim2.new(0, 10)
     padding.Parent = tabFrame
+
+    -- IMPORTANT: Create Layout immediately
+    local layout = Instance.new("UIListLayout")
+    layout.Padding = UDim.new(0, 5)
+    layout.Parent = tabFrame
 
     local Tab = {}
 
@@ -58,7 +63,7 @@ function Window:CreateTab(name)
         local btn = Instance.new("TextButton")
         btn.Name = data.Name or "Button"
         btn.Size = UDim2.new(1, -20, 0, 40)
-        btn.Position = UDim2.new(0, 10, 0, tabFrame.UIListLayout.AbsoluteContentSize.Y)
+        btn.Position = UDim2.new(0, 10, 0, layout.AbsoluteContentSize.Y)
         btn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
         btn.BorderSizePixel = 0
         btn.Text = data.Name or "Button"
@@ -74,19 +79,13 @@ function Window:CreateTab(name)
         btn.MouseButton1Click:Connect(function()
             if data.Callback then data.Callback() end
         end)
-
-        if not tabFrame:FindFirstChild("UIListLayout") then
-            local layout = Instance.new("UIListLayout")
-            layout.Padding = UDim.new(0, 5)
-            layout.Parent = tabFrame
-        end
     end
 
     function Tab:CreateToggle(data)
         local main = Instance.new("Frame")
         main.Name = data.Name or "Toggle"
         main.Size = UDim2.new(1, -20, 0, 40)
-        main.Position = UDim2.new(0, 10, 0, tabFrame.UIListLayout.AbsoluteContentSize.Y)
+        main.Position = UDim2.new(0, 10, 0, layout.AbsoluteContentSize.Y)
         main.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
         main.BorderSizePixel = 0
         main.Parent = tabFrame
@@ -109,7 +108,7 @@ function Window:CreateTab(name)
         local toggleFrame = Instance.new("Frame")
         toggleFrame.Size = UDim2.new(0, 35, 0, 20)
         toggleFrame.Position = UDim2.new(1, -45, 0.5, -10)
-        toggleFrame.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+        toggleFrame.BackgroundColor3 = Color3.fromRGB(255, 60, 60) -- RED (Off)
         toggleFrame.BorderSizePixel = 0
         toggleFrame.Parent = main
         local tCorner = Instance.new("UICorner")
@@ -119,7 +118,7 @@ function Window:CreateTab(name)
         local toggleDot = Instance.new("Frame")
         toggleDot.Size = UDim2.new(0, 16, 0, 16)
         toggleDot.Position = UDim2.new(0, 2, 0.5, -8)
-        toggleDot.BackgroundColor3 = Color3.fromRGB(200, 200, 200)
+        toggleDot.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
         toggleDot.BorderSizePixel = 0
         toggleDot.Parent = toggleFrame
         local dCorner = Instance.new("UICorner")
@@ -130,10 +129,10 @@ function Window:CreateTab(name)
 
         local function updateVisuals()
             if currentValue then
-                toggleFrame.BackgroundColor3 = Color3.fromRGB(50, 255, 90)
+                toggleFrame.BackgroundColor3 = Color3.fromRGB(50, 255, 90) -- GREEN (On)
                 toggleDot.Position = UDim2.new(1, -18, 0.5, -8)
             else
-                toggleFrame.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+                toggleFrame.BackgroundColor3 = Color3.fromRGB(255, 60, 60) -- RED (Off)
                 toggleDot.Position = UDim2.new(0, 2, 0.5, -8)
             end
         end
@@ -151,12 +150,6 @@ function Window:CreateTab(name)
                 toggle()
             end
         end)
-
-        if not tabFrame:FindFirstChild("UIListLayout") then
-            local layout = Instance.new("UIListLayout")
-            layout.Padding = UDim.new(0, 5)
-            layout.Parent = tabFrame
-        end
     end
 
     return Tab
@@ -171,13 +164,134 @@ function Window:ShowTab(name)
 end
 
 -- ============================================
+-- SCRIPT EDITOR (Scirpt)
+-- ============================================
+
+local editorGui = Instance.new("ScreenGui")
+editorGui.Name = "DerfyEditor"
+editorGui.ResetOnSpawn = false
+editorGui.IgnoreGuiInset = true
+editorGui.Enabled = false
+editorGui.Parent = PlayerGui
+
+local editorContainer = Instance.new("Frame")
+editorContainer.Name = "EditorContainer"
+editorContainer.Size = UDim2.new(0, 400, 0, 300)
+editorContainer.Position = UDim2.new(0.5, -200, 0.5, -150)
+editorContainer.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+editorContainer.BorderSizePixel = 0
+editorContainer.ClipsDescendants = true
+editorContainer.Parent = editorGui
+
+local eCorner = Instance.new("UICorner")
+eCorner.CornerRadius = UDim.new(0, 10)
+eCorner.Parent = editorContainer
+
+local eStroke = Instance.new("UIStroke")
+eStroke.Color = Color3.fromRGB(50, 255, 90)
+eStroke.Thickness = 1
+eStroke.Parent = editorContainer
+
+local eTitleBar = Instance.new("Frame")
+eTitleBar.Name = "TitleBar"
+eTitleBar.Size = UDim2.new(1, 0, 0, 30)
+eTitleBar.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+eTitleBar.BorderSizePixel = 0
+eTitleBar.Parent = editorContainer
+
+local eTitle = Instance.new("TextLabel")
+eTitle.Size = UDim2.new(1, -40, 1, 0)
+eTitle.Position = UDim2.new(0, 20, 0, 0)
+eTitle.BackgroundTransparency = 1
+eTitle.Text = "Script Editor"
+eTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+eTitle.Font = Enum.Font.GothamBold
+eTitle.TextSize = 14
+eTitle.TextXAlignment = Enum.TextXAlignment.Left
+eTitle.Parent = eTitleBar
+
+local eCloseBtn = Instance.new("TextButton")
+eCloseBtn.Size = UDim2.new(0, 30, 1, 0)
+eCloseBtn.Position = UDim2.new(1, -5, 0.5, 0)
+eCloseBtn.BackgroundTransparency = 1
+eCloseBtn.Text = "×"
+eCloseBtn.TextColor3 = Color3.fromRGB(255, 60, 60)
+eCloseBtn.Font = Enum.Font.GothamBold
+eCloseBtn.TextSize = 20
+eCloseBtn.Parent = eTitleBar
+
+eCloseBtn.MouseButton1Click:Connect(function()
+    editorGui.Enabled = false
+end)
+
+local eInput = Instance.new("TextBox")
+eInput.Name = "CodeBox"
+eInput.Size = UDim2.new(1, -20, 1, -35)
+eInput.Position = UDim2.new(0, 10, 0, 30)
+eInput.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+eInput.BorderSizePixel = 0
+eInput.ClearTextOnFocus = false
+eInput.Text = ""
+eInput.PlaceholderText = "Write your code here..."
+eInput.PlaceholderColor3 = Color3.fromRGB(100, 100, 100)
+eInput.TextColor3 = Color3.fromRGB(255, 255, 255)
+eInput.Font = Enum.Font.Code
+eInput.TextSize = 12
+eInput.TextWrapped = true
+eInput.MultiLine = true
+eInput.Parent = editorContainer
+
+local iCorner = Instance.new("UICorner")
+iCorner.CornerRadius = UDim.new(0, 6)
+iCorner.Parent = eInput
+
+local eBtn = Instance.new("TextButton")
+eBtn.Name = "UpdateBtn"
+eBtn.Size = UDim2.new(1, -20, 0, 30)
+eBtn.Position = UDim2.new(0, 10, 1, -5)
+eBtn.BackgroundColor3 = Color3.fromRGB(50, 255, 90)
+eBtn.BorderSizePixel = 0
+eBtn.Text = "Update Script"
+eBtn.TextColor3 = Color3.fromRGB(0, 0, 0)
+eBtn.Font = Enum.Font.GothamBold
+eBtn.TextSize = 14
+eBtn.Parent = editorContainer
+
+local bCorner = Instance.new("UICorner")
+bCorner.CornerRadius = UDim.new(0, 6)
+bCorner.Parent = eBtn
+
+-- Editor Logic
+eBtn.MouseButton1Click:Connect(function()
+    local code = eInput.Text
+    
+    -- 1. Remove existing UI
+    if screenGui then
+        screenGui:Destroy()
+    end
+    
+    -- 2. Re-run the script via loadstring
+    -- This resets the 'Config' if you typed one, and re-creates the Window
+    local success, err = pcall(function()
+        loadstring(code)()
+    end)
+    
+    if not success then
+        warn("Error executing script: " .. tostring(err))
+        -- We need to recreate screenGui immediately or the user is stuck!
+        -- But since we destroyed it, we just wait for BuildUI to make a new one.
+    end
+end)
+
+-- ============================================
 -- UI SETUP
 -- ============================================
 
 local function BuildUI()
-    local screenGui = Instance.new("ScreenGui")
+    screenGui = Instance.new("ScreenGui")
     screenGui.Name = "DerfyUI"
     screenGui.ResetOnSpawn = false
+    screenGui.IgnoreGuiInset = true -- For Mobile
     screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     screenGui.Parent = PlayerGui
 
@@ -283,6 +397,30 @@ local function BuildUI()
     innerCorner.CornerRadius = UDim.new(0, 20)
     innerCorner.Parent = innerBody
 
+    -- 5. Mobile Open Button
+    local openSideBtn = Instance.new("TextButton")
+    openSideBtn.Name = "OpenSideBtn"
+    openSideBtn.Size = UDim2.new(0, 70, 0, 70) 
+    openSideBtn.Position = UDim2.new(0.5, -35, 0, -95) 
+    openSideBtn.BackgroundColor3 = Color3.fromRGB(255, 60, 60) -- Red (Closed)
+    openSideBtn.Text = "Open" -- Initial State
+    openSideBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    openSideBtn.Font = Enum.Font.GothamBold
+    openSideBtn.TextSize = 18
+    openSideBtn.AutoButtonColor = false
+    openSideBtn.Visible = false -- Starts Open
+    openSideBtn.Parent = screenGui
+
+    local openCorner = Instance.new("UICorner")
+    openCorner.CornerRadius = UDim.new(1, 0) -- Full Circle
+    openCorner.Parent = openSideBtn
+
+    openSideBtn.MouseButton1Click:Connect(function()
+        -- Opens Script Editor
+        editorGui.Enabled = true
+        editorGui.IgnoreGuiInset = false
+    end)
+
     -- ============================================
     -- LOGIC & ANIMATION
     -- ============================================
@@ -293,9 +431,23 @@ local function BuildUI()
         Enum.EasingDirection.Out
     )
 
+    local function updateButton()
+        if isOpen then
+            -- Window Open: Button Green, says "Close"
+            openSideBtn.BackgroundColor3 = Color3.fromRGB(50, 255, 90)
+            openSideBtn.Text = "Close"
+        else
+            -- Window Closed: Button Red, says "Open"
+            openSideBtn.BackgroundColor3 = Color3.fromRGB(255, 60, 60)
+            openSideBtn.Text = "Open"
+        end
+    end
+
     local function openWindow()
         if not mainContainer then return end
+        openSideBtn.Visible = false
         mainContainer.Visible = true
+        
         local tweenIn = TweenService:Create(mainContainer, tweenInfo, {
             Size = UDim2.new(0, 500, 0, 380),
             Position = UDim2.new(0.5, -250, mainContainer.Position.Y.Scale, mainContainer.Position.Y.Offset)
@@ -303,6 +455,7 @@ local function BuildUI()
         tweenIn:Play()
         isOpen = true
         isMinimized = false
+        updateButton()
     end
 
     local function closeWindow()
@@ -315,6 +468,8 @@ local function BuildUI()
         tweenOut.Completed:Wait()
         mainContainer.Visible = false
         isOpen = false
+        updateButton()
+        openSideBtn.Visible = true
     end
 
     function toggleMinimize()
@@ -423,7 +578,7 @@ local function BuildUI()
         end)
     end
 
-    -- INTRO
+    -- INTRO & NOTIFICATION
     task.wait(0.1) 
     mainContainer.Size = UDim2.new(0, 500, 0, 50) 
     mainContainer.Position = UDim2.new(0.5, -250, 0, -300) 
@@ -435,12 +590,14 @@ local function BuildUI()
     introTween:Play()
 
     introTween.Completed:Wait()
+    isOpen = true
+    updateButton() -- Hide button, set green
     task.wait(0.2)
     showNotification("Derfy Library Loaded", "Library Loaded Successfully")
 end
 
 -- ============================================
--- GLOBAL EXPORT (No Return)
+-- GLOBAL EXPORT (Must be at bottom to update on re-run)
 -- ============================================
 getgenv().DerfyWindow = Window
 
