@@ -1,44 +1,4 @@
 -- ============================================
--- CONFIGURATION (Edit this part!)
--- ============================================
-local Config = {
-   Name = "Derfy Hub",
-   Icon = 0, 
-   LoadingTitle = "Derfy Interface",
-   LoadingSubtitle = "by Deron",
-   ShowText = "Open", 
-   Theme = "Default", 
-
-   ToggleUIKeybind = "K", 
-
-   DisableRayfieldPrompts = false,
-   DisableBuildWarnings = false, 
-
-   ConfigurationSaving = {
-      Enabled = true, 
-      FolderName = nil, 
-      FileName = "Big Hub"
-   },
-
-   Discord = {
-      Enabled = false, 
-      Invite = "noinvitelink", 
-      RememberJoins = true 
-   },
-
-   KeySystem = false, -- Set to true to use Key System
-   KeySettings = {
-      Title = "Derfy Key System",
-      Subtitle = "Key System",
-      Note = "No method of obtaining a key is provided", 
-      FileName = "Key", 
-      SaveKey = true, 
-      GrabKeyFromSite = false, 
-      Key = {"Hello"} 
-   }
-}
-
--- ============================================
 -- MAIN SCRIPT
 -- ============================================
 
@@ -49,6 +9,7 @@ local PlayerGui = Player:WaitForChild("PlayerGui")
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
+local HttpService = game:GetService("HttpService")
 
 -- UI References
 local mainContainer = nil
@@ -58,20 +19,20 @@ local isMinimized = false
 local isOpen = false 
 
 -- ============================================
--- KEY SYSTEM
+-- KEY SYSTEM LOGIC
 -- ============================================
 
 local function VerifyKey()
-    if not Config.KeySystem then return true end
-    if Config.KeySettings.GrabKeyFromSite then
+    if not Settings.KeySystem then return true end
+    if Settings.KeySettings.GrabKeyFromSite then
         local success, result = pcall(function()
-            return loadstring(game:HttpGet(Config.KeySettings.GrabKeyFromSite))()
+            return loadstring(game:HttpGet(Settings.KeySettings.GrabKeyFromSite))()
         end)
         if success and type(result) == "table" then
-            Config.KeySettings.Key = result
+            Settings.KeySettings.Key = result
         end
     end
-    return Config.KeySettings.Key or {}
+    return Settings.KeySettings.Key or {}
 end
 
 local function ShowKeyScreen(onSuccess)
@@ -97,7 +58,7 @@ local function ShowKeyScreen(onSuccess)
     local title = Instance.new("TextLabel")
     title.Size = UDim2.new(1, 0, 0, 50)
     title.BackgroundTransparency = 1
-    title.Text = Config.KeySettings.Title
+    title.Text = Settings.KeySettings.Title
     title.TextColor3 = Color3.fromRGB(255, 255, 255)
     title.Font = Enum.Font.GothamBold
     title.TextSize = 22
@@ -107,7 +68,7 @@ local function ShowKeyScreen(onSuccess)
     subtitle.Size = UDim2.new(1, -40, 0, 40)
     subtitle.Position = UDim2.new(0, 20, 0, 50)
     subtitle.BackgroundTransparency = 1
-    subtitle.Text = Config.KeySettings.Subtitle
+    subtitle.Text = Settings.KeySettings.Subtitle
     subtitle.TextColor3 = Color3.fromRGB(150, 150, 150)
     subtitle.Font = Enum.Font.Gotham
     subtitle.TextSize = 14
@@ -147,7 +108,7 @@ local function ShowKeyScreen(onSuccess)
     statusText.Size = UDim2.new(1, 0, 0, 30)
     statusText.Position = UDim2.new(0, 0, 1, -25)
     statusText.BackgroundTransparency = 1
-    statusText.Text = Config.KeySettings.Note
+    statusText.Text = Settings.KeySettings.Note
     statusText.TextColor3 = Color3.fromRGB(255, 255, 255)
     statusText.Font = Enum.Font.Gotham
     statusText.TextSize = 12
@@ -332,7 +293,7 @@ end
 -- UI SETUP
 -- ============================================
 
-local function StartUI()
+local function BuildUI()
     local screenGui = Instance.new("ScreenGui")
     screenGui.Name = "DerfyUI"
     screenGui.ResetOnSpawn = false
@@ -367,7 +328,7 @@ local function StartUI()
     titleText.Size = UDim2.new(1, -150, 1, 0)
     titleText.Position = UDim2.new(0, 20, 0, -5) 
     titleText.BackgroundTransparency = 1
-    titleText.Text = Config.Name
+    titleText.Text = Settings.Name
     titleText.TextColor3 = Color3.fromRGB(255, 255, 255)
     titleText.TextSize = 18
     titleText.Font = Enum.Font.GothamBold
@@ -380,7 +341,7 @@ local function StartUI()
     subTitle.Size = UDim2.new(1, -150, 1, 0)
     subTitle.Position = UDim2.new(0, 20, 0, 10)
     subTitle.BackgroundTransparency = 1
-    subTitle.Text = Config.LoadingTitle
+    subTitle.Text = Settings.LoadingTitle
     subTitle.TextColor3 = Color3.fromRGB(150, 150, 150)
     subTitle.TextSize = 12
     subTitle.Font = Enum.Font.Gotham
@@ -420,9 +381,9 @@ local function StartUI()
         return dot
     end
 
-    local redDot = createDot(Color3.fromRGB(255, 60, 60), 10, function() CloseDerfyUI() end)
+    local redDot = createDot(Color3.fromRGB(255, 60, 60), 10, function() closeWindow() end)
     local yellowDot = createDot(Color3.fromRGB(255, 200, 50), 35, function() toggleMinimize() end)
-    local greenDot = createDot(Color3.fromRGB(50, 255, 90), 60, function() CloseDerfyUI() end)
+    local greenDot = createDot(Color3.fromRGB(50, 255, 90), 60, function() closeWindow() end)
 
     -- 4. Content Body
     contentBody = Instance.new("Frame")
@@ -474,11 +435,6 @@ local function StartUI()
         mainContainer.Visible = false
         isOpen = false
     end
-    
-    -- Local Function for Dots
-    function CloseDerfyUI()
-        closeWindow()
-    end
 
     function toggleMinimize()
         if not isOpen then return end 
@@ -492,13 +448,12 @@ local function StartUI()
 
     UserInputService.InputBegan:Connect(function(input, gameProcessed)
         if gameProcessed then return end 
-        local key = (type(Config.ToggleUIKeybind) == "string" and Enum.KeyCode[Config.ToggleUIKeybind]) or Config.ToggleUIKeybind
+        local key = (type(Settings.ToggleUIKeybind) == "string" and Enum.KeyCode[Settings.ToggleUIKeybind]) or Settings.ToggleUIKeybind
         if input.KeyCode == key then
             if isOpen then closeWindow() else openWindow() end
         end
     end)
 
-    -- DRAGGING
     local dragging = false
     local dragInput = nil
     local dragStart = nil
@@ -535,6 +490,7 @@ local function StartUI()
         notifGui.Parent = PlayerGui
 
         local container = Instance.new("Frame")
+        container.Name = "Container"
         container.Size = UDim2.new(0, 300, 0, 50)
         container.Position = UDim2.new(1, 320, 1, -70) 
         container.BackgroundColor3 = Color3.fromRGB(20, 20, 20) 
@@ -547,6 +503,7 @@ local function StartUI()
         contCorner.Parent = container
 
         local titleLabel = Instance.new("TextLabel")
+        titleLabel.Name = "Title"
         titleLabel.Size = UDim2.new(1, 0, 0, 20)
         titleLabel.Position = UDim2.new(0, 0, 0, 0)
         titleLabel.BackgroundTransparency = 1
@@ -554,9 +511,11 @@ local function StartUI()
         titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
         titleLabel.Font = Enum.Font.GothamBold
         titleLabel.TextSize = 14
+        titleLabel.TextXAlignment = Enum.TextXAlignment.Left
         titleLabel.Parent = container
 
         local msgLabel = Instance.new("TextLabel")
+        msgLabel.Name = "Message"
         msgLabel.Size = UDim2.new(1, 0, 1, -20)
         msgLabel.Position = UDim2.new(0, 0, 0, 20)
         msgLabel.BackgroundTransparency = 1
@@ -564,6 +523,7 @@ local function StartUI()
         msgLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
         msgLabel.Font = Enum.Font.Gotham
         msgLabel.TextSize = 12
+        msgLabel.TextXAlignment = Enum.TextXAlignment.Left
         msgLabel.TextWrapped = true
         msgLabel.Parent = container
 
@@ -581,7 +541,8 @@ local function StartUI()
             notifGui:Destroy()
         end)
     end
-    
+
+    -- INTRO
     task.wait(0.1) 
     mainContainer.Size = UDim2.new(0, 500, 0, 50) 
     mainContainer.Position = UDim2.new(0.5, -250, 0, -300) 
@@ -591,28 +552,29 @@ local function StartUI()
         Position = UDim2.new(0.5, -250, 0.5, -190)
     })
     introTween:Play()
+
     introTween.Completed:Wait()
     task.wait(0.2)
     showNotification("Derfy Library Loaded", "Library Loaded Successfully")
 end
 
 -- ============================================
--- EXECUTE
+-- EXECUTION
 -- ============================================
 
-if Config.KeySystem then
+if Settings.KeySystem then
     ShowKeyScreen(function()
-        StartUI()
+        BuildUI()
     end)
 else
-    StartUI()
+    BuildUI()
 end
 
--- Expose API locally so you can add buttons below in the same script
+-- Expose Window locally (Not global)
 local Window = Window
 
--- EXAMPLE USAGE (Edit this to add your own buttons!)
-task.wait(1) -- Wait for UI to finish loading
+-- EXAMPLE CONTENT
+task.wait(1.2) -- Wait for intro
 local Tab = Window:CreateTab("Main")
 
 Tab:CreateButton({
